@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalendarApp.Data", "CalendarApp.Data\CalendarApp.Data.csproj", "{28AA2675-38B1-411A-AB66-6E74BDD17970}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalendarApp.Business", "CalendarApp.Business\CalendarApp.Business.csproj", "{1F0B96C4-4887-4029-9054-E8567CFD769A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalendarApp.UI", "CalendarApp.UI\CalendarApp.UI.csproj", "{B34B59E6-07BD-4E20-B8C5-47577A07F95F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{28AA2675-38B1-411A-AB66-6E74BDD17970}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28AA2675-38B1-411A-AB66-6E74BDD17970}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28AA2675-38B1-411A-AB66-6E74BDD17970}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28AA2675-38B1-411A-AB66-6E74BDD17970}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F0B96C4-4887-4029-9054-E8567CFD769A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F0B96C4-4887-4029-9054-E8567CFD769A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F0B96C4-4887-4029-9054-E8567CFD769A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F0B96C4-4887-4029-9054-E8567CFD769A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B34B59E6-07BD-4E20-B8C5-47577A07F95F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B34B59E6-07BD-4E20-B8C5-47577A07F95F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B34B59E6-07BD-4E20-B8C5-47577A07F95F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B34B59E6-07BD-4E20-B8C5-47577A07F95F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
