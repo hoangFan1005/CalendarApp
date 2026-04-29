@@ -10,8 +10,11 @@ namespace CalendarApp.Business.Validators
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Tên cuộc hẹn không được để trống.");
 
+            RuleFor(x => x.Location)
+                .NotEmpty().WithMessage("Địa điểm không được để trống.");
+
             RuleFor(x => x.EndTime)
-                .GreaterThan(x => x.StartTime).WithMessage("Khoảng thời gian (Duration) không được là số âm (Thời gian kết thúc phải lớn hơn bắt đầu).");
+                .GreaterThan(x => x.StartTime).WithMessage("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.");
         }
     }
 }

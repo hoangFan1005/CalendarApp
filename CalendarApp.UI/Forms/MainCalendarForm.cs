@@ -30,6 +30,27 @@ namespace CalendarApp.UI.Forms
         private static readonly Color GoogleEventBlue = Color.FromArgb(3, 155, 229);
         private static readonly Color GoogleEventHover = Color.FromArgb(2, 106, 180);
 
+        // 24 distinct event colors
+        private static readonly Color[] EventColors = {
+            Color.FromArgb(3, 155, 229),   Color.FromArgb(142, 36, 170),
+            Color.FromArgb(230, 124, 115),  Color.FromArgb(51, 182, 121),
+            Color.FromArgb(246, 191, 38),   Color.FromArgb(121, 134, 203),
+            Color.FromArgb(97, 97, 97),     Color.FromArgb(213, 0, 0),
+            Color.FromArgb(3, 137, 129),    Color.FromArgb(244, 81, 30),
+            Color.FromArgb(63, 81, 181),    Color.FromArgb(0, 150, 136),
+            Color.FromArgb(156, 39, 176),   Color.FromArgb(33, 150, 243),
+            Color.FromArgb(255, 152, 0),    Color.FromArgb(76, 175, 80),
+            Color.FromArgb(233, 30, 99),    Color.FromArgb(0, 188, 212),
+            Color.FromArgb(139, 195, 74),   Color.FromArgb(255, 87, 34),
+            Color.FromArgb(103, 58, 183),   Color.FromArgb(0, 137, 123),
+            Color.FromArgb(194, 24, 91),    Color.FromArgb(48, 63, 159)
+        };
+
+        private static Color DarkenColor(Color c, double factor)
+        {
+            return Color.FromArgb(c.A, (int)(c.R * (1 - factor)), (int)(c.G * (1 - factor)), (int)(c.B * (1 - factor)));
+        }
+
         // UI Elements
         private Panel leftPanel = null!;
         private Panel rightPanel = null!;
@@ -469,171 +490,81 @@ namespace CalendarApp.UI.Forms
             }
 
             // Render appointments
+            int colorIdx = 0;
             foreach (var appt in dayAppts)
             {
                 double startMin = appt.StartTime.Hour * 60 + appt.StartTime.Minute;
                 double endMin = appt.EndTime.Hour * 60 + appt.EndTime.Minute;
-                if (endMin <= startMin) endMin = startMin + 30; // min 30 min display
-
+                if (endMin <= startMin) endMin = startMin + 30;
                 int topY = (int)(startMin / 60.0 * hourHeight) + 20;
-                int chipHeight = Math.Max((int)((endMin - startMin) / 60.0 * hourHeight), 50);
+                int chipH = Math.Max((int)((endMin - startMin) / 60.0 * hourHeight), 26);
 
-                string reminderText = "";
+                bool done = appt.IsCompleted;
+                var cColor = done ? Color.FromArgb(189,189,189) : EventColors[colorIdx % EventColors.Length];
+                var cHover = done ? Color.FromArgb(158,158,158) : DarkenColor(cColor, 0.15);
+                colorIdx++;
+
+                string rem = "";
                 if (appt.Reminders != null && appt.Reminders.Any())
-                {
-                    var min = appt.Reminders.Min(r => r.MinutesBefore);
-                    reminderText = $"  🔔 Nhắc trước {min} phút";
-                }
+                    rem = $"🔔{appt.Reminders.Min(r => r.MinutesBefore)}p";
 
-                bool completed = appt.IsCompleted;
-                var chipBg = completed ? Color.FromArgb(189, 189, 189) : GoogleEventBlue;
-                var chipHoverBg = completed ? Color.FromArgb(158, 158, 158) : GoogleEventHover;
-
-                var chipPanel = new Panel
-                {
+                var chip = new Panel {
                     Location = new Point(timeColWidth + 4, topY),
-                    Size = new Size(innerPanel.Width - timeColWidth - 20, chipHeight),
-                    BackColor = chipBg,
+                    Size = new Size(innerPanel.Width - timeColWidth - 20, chipH),
+                    BackColor = cColor,
                     Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
-                    Cursor = Cursors.Hand,
-                    Padding = new Padding(8, 4, 8, 4)
+                    Cursor = Cursors.Hand
                 };
-
-                // Rounded corners
-                chipPanel.Paint += (s, pe) =>
-                {
+                chip.Paint += (s, pe) => {
                     pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                    using var brush = new SolidBrush(chipPanel.BackColor);
-                    var rect = new Rectangle(0, 0, chipPanel.Width, chipPanel.Height);
-                    using var path = RoundedRect(rect, 6);
-                    pe.Graphics.FillPath(brush, path);
+                    using var br = new SolidBrush(chip.BackColor);
+                    using var pa = RoundedRect(new Rectangle(0,0,chip.Width,chip.Height), 4);
+                    pe.Graphics.FillPath(br, pa);
                 };
 
-                var nameStyle = completed ? FontStyle.Strikeout | FontStyle.Bold : FontStyle.Bold;
-                var lblApptName = new Label
-                {
-                    Text = completed ? $"✔ {appt.Name}" : appt.Name,
-                    Font = new Font("Segoe UI", 10, nameStyle),
-                    ForeColor = completed ? Color.FromArgb(220, 220, 220) : Color.White,
-                    Location = new Point(8, 4),
-                    AutoSize = true,
-                    BackColor = Color.Transparent,
-                    Cursor = Cursors.Hand
-                };
-                chipPanel.Controls.Add(lblApptName);
+                var ts = done ? FontStyle.Strikeout : FontStyle.Regular;
+                var tc = done ? Color.FromArgb(220,220,220) : Color.White;
+                var dc = done ? Color.FromArgb(200,200,200) : Color.FromArgb(230,240,255);
+                int x = 8, ly = Math.Max((chipH - 16) / 2, 2);
 
-                var lblApptTime = new Label
-                {
-                    Text = $"{appt.StartTime:HH:mm} - {appt.EndTime:HH:mm}" +
-                           (string.IsNullOrEmpty(appt.Location) ? "" : $"  📍 {appt.Location}") +
-                           reminderText,
-                    Font = new Font("Segoe UI", 8, completed ? FontStyle.Strikeout : FontStyle.Regular),
-                    ForeColor = completed ? Color.FromArgb(210, 210, 210) : Color.FromArgb(220, 230, 255),
-                    Location = new Point(8, 24),
-                    AutoSize = true,
-                    BackColor = Color.Transparent,
-                    Cursor = Cursors.Hand
-                };
-                chipPanel.Controls.Add(lblApptTime);
-
-                // ── Action Buttons (inline, subtle) ──
-                var capturedApptId = appt.Id;
-                int btnY = 44;
-
-                if (!completed)
-                {
-                    var btnComplete = new Label
-                    {
-                        Text = "✔ Xong",
-                        Font = new Font("Segoe UI", 7, FontStyle.Regular),
-                        ForeColor = Color.FromArgb(200, 230, 201),
-                        BackColor = Color.FromArgb(2, 136, 209),
-                        AutoSize = false,
-                        Size = new Size(50, 16),
-                        TextAlign = ContentAlignment.MiddleCenter,
-                        Cursor = Cursors.Hand,
-                        Location = new Point(8, btnY)
-                    };
-                    btnComplete.MouseEnter += (s, e) => btnComplete.BackColor = Color.FromArgb(1, 119, 189);
-                    btnComplete.MouseLeave += (s, e) => btnComplete.BackColor = Color.FromArgb(2, 136, 209);
-                    btnComplete.Click += async (s, e) =>
-                    {
-                        if (MessageBox.Show("Đánh dấu cuộc hẹn đã hoàn thành?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                        {
-                            using var cScope = _serviceProvider.CreateScope();
-                            var svc = cScope.ServiceProvider.GetRequiredService<IAppointmentService>();
-                            await svc.CompleteAppointmentAsync(capturedApptId);
-                            RenderMiniCalendar();
-                            await RenderDayViewAsync();
-                        }
-                    };
-                    chipPanel.Controls.Add(btnComplete);
-                    btnComplete.BringToFront();
+                chip.Controls.Add(new Label { Text=$"{appt.StartTime:HH:mm}-{appt.EndTime:HH:mm}", Font=new Font("Segoe UI",8,FontStyle.Bold|ts), ForeColor=tc, Location=new Point(x,ly), AutoSize=true, BackColor=Color.Transparent, Cursor=Cursors.Hand });
+                x += ((Label)chip.Controls[chip.Controls.Count-1]).PreferredWidth + 6;
+                chip.Controls.Add(new Label { Text=done?$"✔{appt.Name}":appt.Name, Font=new Font("Segoe UI",9,FontStyle.Bold|ts), ForeColor=tc, Location=new Point(x,ly-1), AutoSize=true, BackColor=Color.Transparent, Cursor=Cursors.Hand });
+                x += ((Label)chip.Controls[chip.Controls.Count-1]).PreferredWidth + 6;
+                if (!string.IsNullOrEmpty(appt.Location)) {
+                    chip.Controls.Add(new Label { Text=$"📍{appt.Location}", Font=new Font("Segoe UI",8,ts), ForeColor=dc, Location=new Point(x,ly), AutoSize=true, BackColor=Color.Transparent, Cursor=Cursors.Hand });
+                    x += ((Label)chip.Controls[chip.Controls.Count-1]).PreferredWidth + 6;
+                }
+                if (!string.IsNullOrEmpty(rem)) {
+                    chip.Controls.Add(new Label { Text=rem, Font=new Font("Segoe UI",8,ts), ForeColor=dc, Location=new Point(x,ly), AutoSize=true, BackColor=Color.Transparent, Cursor=Cursors.Hand });
+                    x += ((Label)chip.Controls[chip.Controls.Count-1]).PreferredWidth + 6;
                 }
 
-                var btnDelete = new Label
-                {
-                    Text = "✕ Xóa",
-                    Font = new Font("Segoe UI", 7, FontStyle.Regular),
-                    ForeColor = Color.FromArgb(255, 205, 210),
-                    BackColor = completed ? Color.FromArgb(158, 158, 158) : Color.FromArgb(2, 136, 209),
-                    AutoSize = false,
-                    Size = new Size(46, 16),
-                    TextAlign = ContentAlignment.MiddleCenter,
-                    Cursor = Cursors.Hand,
-                    Location = new Point(completed ? 8 : 62, btnY)
-                };
-                var delNormal = btnDelete.BackColor;
-                btnDelete.MouseEnter += (s, e) => btnDelete.BackColor = Color.FromArgb(1, 119, 189);
-                btnDelete.MouseLeave += (s, e) => btnDelete.BackColor = delNormal;
-                btnDelete.Click += async (s, e) =>
-                {
-                    if (MessageBox.Show("Bạn có chắc muốn xóa cuộc hẹn này?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
-                    {
-                        using var dScope = _serviceProvider.CreateScope();
-                        var svc = dScope.ServiceProvider.GetRequiredService<IAppointmentService>();
-                        await svc.DeleteAppointmentAsync(capturedApptId);
-                        RenderMiniCalendar();
-                        await RenderDayViewAsync();
-                    }
-                };
-                chipPanel.Controls.Add(btnDelete);
-                btnDelete.BringToFront();
-
-                // Hover
-                void SetHover(Control ctrl)
-                {
-                    ctrl.MouseEnter += (s, e) => { chipPanel.BackColor = chipHoverBg; chipPanel.Invalidate(); };
-                    ctrl.MouseLeave += (s, e) => { chipPanel.BackColor = chipBg; chipPanel.Invalidate(); };
+                var aid = appt.Id;
+                if (!done) {
+                    var bc = new Label { Text="✔Xong", Font=new Font("Segoe UI",7), ForeColor=Color.FromArgb(200,230,201), BackColor=Color.Transparent, AutoSize=true, Location=new Point(x,ly+1), Cursor=Cursors.Hand };
+                    bc.Click += async (s,e) => { if (MessageBox.Show("Hoàn thành?","Xác nhận",MessageBoxButtons.YesNo,MessageBoxIcon.Question)==DialogResult.Yes) { using var sc=_serviceProvider.CreateScope(); await sc.ServiceProvider.GetRequiredService<IAppointmentService>().CompleteAppointmentAsync(aid); RenderMiniCalendar(); await RenderDayViewAsync(); } };
+                    chip.Controls.Add(bc); x += bc.PreferredWidth + 4;
                 }
-                SetHover(chipPanel);
-                SetHover(lblApptName);
-                SetHover(lblApptTime);
+                var bd = new Label { Text="✕Xóa", Font=new Font("Segoe UI",7), ForeColor=Color.FromArgb(255,200,200), BackColor=Color.Transparent, AutoSize=true, Location=new Point(x,ly+1), Cursor=Cursors.Hand };
+                bd.Click += async (s,e) => { if (MessageBox.Show("Xóa cuộc hẹn?","Xác nhận",MessageBoxButtons.YesNo,MessageBoxIcon.Warning)==DialogResult.Yes) { using var sc=_serviceProvider.CreateScope(); await sc.ServiceProvider.GetRequiredService<IAppointmentService>().DeleteAppointmentAsync(aid); RenderMiniCalendar(); await RenderDayViewAsync(); } };
+                chip.Controls.Add(bd);
 
-                // DoubleClick to edit
-                var apptDto = mapper.Map<AppointmentDto>(appt);
-                void SetEdit(Control ctrl)
-                {
-                    ctrl.DoubleClick += async (s, e) =>
-                    {
-                        using var editScope = _serviceProvider.CreateScope();
-                        var svc = editScope.ServiceProvider.GetRequiredService<IAppointmentService>();
-                        var val = editScope.ServiceProvider.GetRequiredService<IValidator<AppointmentDto>>();
-                        using var form = new AddAppointmentForm(svc, val, _currentUserId, apptDto.StartTime, apptDto);
-                        if (form.ShowDialog() == DialogResult.OK)
-                        {
-                            RenderMiniCalendar();
-                            await RenderDayViewAsync();
-                        }
-                    };
+                var dto = mapper.Map<AppointmentDto>(appt);
+                foreach (Control c in chip.Controls) {
+                    c.MouseEnter += (s,e) => { chip.BackColor=cHover; chip.Invalidate(); };
+                    c.MouseLeave += (s,e) => { chip.BackColor=cColor; chip.Invalidate(); };
+                    c.DoubleClick += async (s,e) => { using var sc=_serviceProvider.CreateScope(); var sv=sc.ServiceProvider.GetRequiredService<IAppointmentService>(); var vl=sc.ServiceProvider.GetRequiredService<IValidator<AppointmentDto>>(); using var f=new AddAppointmentForm(sv,vl,_currentUserId,dto.StartTime,dto); if(f.ShowDialog()==DialogResult.OK){RenderMiniCalendar();await RenderDayViewAsync();} };
                 }
-                SetEdit(chipPanel);
-                SetEdit(lblApptName);
-                SetEdit(lblApptTime);
+                chip.MouseEnter += (s,e) => { chip.BackColor=cHover; chip.Invalidate(); };
+                chip.MouseLeave += (s,e) => { chip.BackColor=cColor; chip.Invalidate(); };
+                chip.DoubleClick += async (s,e) => { using var sc=_serviceProvider.CreateScope(); var sv=sc.ServiceProvider.GetRequiredService<IAppointmentService>(); var vl=sc.ServiceProvider.GetRequiredService<IValidator<AppointmentDto>>(); using var f=new AddAppointmentForm(sv,vl,_currentUserId,dto.StartTime,dto); if(f.ShowDialog()==DialogResult.OK){RenderMiniCalendar();await RenderDayViewAsync();} };
 
-                innerPanel.Controls.Add(chipPanel);
-                chipPanel.BringToFront();
+                innerPanel.Controls.Add(chip);
+                chip.BringToFront();
             }
+
+
 
             // Scroll to current hour if today
             if (_selectedDate.Date == DateTime.Today)
